@@ -22,6 +22,7 @@ CPP_DATA = {
         "Cash back": 0.5,
     },
     "United MileagePlus": {
+        "United flights": 1.35,
         "Partner flights": 1.2,
         "Upgrades": 1.5,
         "Cash back": 0.5,
