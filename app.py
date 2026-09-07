@@ -16,7 +16,7 @@ PALETTES = {
     },
     "dark": {
         "bg":              "#0F1923",
-        "text":            "#EDE8DF",
+        "text":            "#F0EBE0",
         "muted":           "#A0AEC0",
         "card_bg":         "#1A2535",
         "accent":          "#D4A843",
@@ -129,8 +129,29 @@ st.markdown(f"""
     .stApp {{ background-color: {p['bg']}; }}
     [data-testid="stHeader"] {{ background-color: {p['bg']}; height: 0; overflow: hidden; }}
     .block-container {{ padding-top: 1.5rem; }}
-    p, li, label {{ color: {p['text']}; }}
-    h1, h2, h3 {{ color: {p['text']}; }}
+
+    /* Text elements */
+    p, li, label, span, div {{ color: {p['text']}; }}
+    h1, h2, h3, h4 {{ color: {p['text']} !important; }}
+
+    /* Metric numbers and labels */
+    [data-testid="stMetricValue"] > div {{ color: {p['text']} !important; }}
+    [data-testid="stMetricLabel"] > div {{ color: {p['text']} !important; }}
+    [data-testid="stMetricDelta"] {{ color: {p['muted']} !important; }}
+
+    /* Dropdowns */
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
+        background-color: {p['card_bg']} !important;
+        color: {p['text']} !important;
+    }}
+    [data-baseweb="select"] span {{ color: {p['text']} !important; }}
+
+    /* Number input */
+    [data-testid="stNumberInput"] input {{
+        background-color: {p['card_bg']} !important;
+        color: {p['text']} !important;
+    }}
+
     .stCaption p {{ color: {p['muted']} !important; }}
 </style>
 """, unsafe_allow_html=True)
