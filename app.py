@@ -2,29 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-PALETTES = {
-    "light": {
-        "bg":              "#FBF8F2",
-        "text":            "#1B2A41",
-        "muted":           "#4A5568",
-        "card_bg":         "#F0EBE0",
-        "accent":          "#C9A84C",
-        "bar_default":     "#5B7FA6",
-        "callout_bg":      "#E8F2EC",
-        "callout_border":  "#2D6A4F",
-        "callout_text":    "#1B4332",
-    },
-    "dark": {
-        "bg":              "#0F1923",
-        "text":            "#F0EBE0",
-        "muted":           "#A0AEC0",
-        "card_bg":         "#1A2535",
-        "accent":          "#D4A843",
-        "bar_default":     "#5B8DB8",
-        "callout_bg":      "#1A2F24",
-        "callout_border":  "#4CAF7D",
-        "callout_text":    "#A8D5B5",
-    },
+p = {
+    "bg":             "#1A6B9A",
+    "text":           "#F0EBE0",
+    "muted":          "#B8D4E8",
+    "card_bg":        "#155680",
+    "accent":         "#C9A84C",
+    "bar_default":    "#5BA4CF",
+    "callout_bg":     "#1A3D2B",
+    "callout_border": "#4CAF7D",
+    "callout_text":   "#A8D5B5",
 }
 
 PROGRAMS = {
@@ -118,15 +105,19 @@ CPP_DATA = {k: v for group in PROGRAMS.values() for k, v in group.items()}
 
 st.set_page_config(page_title="Points & Miles Comparator", layout="centered")
 
-# Theme toggle
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
-
-p = PALETTES["dark"] if st.session_state.dark_mode else PALETTES["light"]
-
 st.markdown(f"""
 <style>
-    .stApp {{ background-color: {p['bg']} !important; }}
+    .stApp {{
+        background:
+            radial-gradient(ellipse 220px 90px at 15% 12%, rgba(255,255,255,0.30) 0%, transparent 70%),
+            radial-gradient(ellipse 160px 70px at 22% 18%, rgba(255,255,255,0.20) 0%, transparent 70%),
+            radial-gradient(ellipse 280px 100px at 65% 8%,  rgba(255,255,255,0.28) 0%, transparent 70%),
+            radial-gradient(ellipse 180px 75px at 72% 15%, rgba(255,255,255,0.18) 0%, transparent 70%),
+            radial-gradient(ellipse 200px 85px at 88% 22%, rgba(255,255,255,0.22) 0%, transparent 70%),
+            radial-gradient(ellipse 140px 60px at 40% 6%,  rgba(255,255,255,0.15) 0%, transparent 70%),
+            linear-gradient(180deg, #5BB8E8 0%, #2E8FCC 30%, #1A6B9A 70%, #155680 100%);
+        background-attachment: fixed;
+    }}
     [data-testid="stHeader"] {{ background-color: {p['bg']}; height: 0; overflow: hidden; }}
     .block-container {{ padding-top: 1.5rem; }}
 
@@ -155,14 +146,7 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# Title row with toggle
-title_col, toggle_col = st.columns([7, 1])
-with title_col:
-    st.title("✈️ Points & Miles Comparator")
-with toggle_col:
-    st.markdown("<div style='padding-top: 2.3rem;'>", unsafe_allow_html=True)
-    st.toggle("🌙", key="dark_mode")
-    st.markdown("</div>", unsafe_allow_html=True)
+st.title("✈️ Points & Miles Comparator")
 st.markdown(f"""
 <p style="font-size: 1.3rem; font-weight: 600; color: {p['text']}; margin-bottom: 0.25rem;">
     See what your points are actually worth.
