@@ -140,11 +140,17 @@ st.markdown(f"""
     [data-testid="stMetricDelta"] {{ color: {p['muted']} !important; }}
 
     /* Dropdowns */
-    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
+    [data-baseweb="select"] > div,
+    [data-baseweb="select"] > div > div,
+    [data-baseweb="select"] span,
+    [data-baseweb="popover"] li,
+    [data-baseweb="menu"] {{
         background-color: {p['card_bg']} !important;
         color: {p['text']} !important;
     }}
-    [data-baseweb="select"] span {{ color: {p['text']} !important; }}
+    [data-baseweb="option"]:hover {{
+        background-color: {p['bg']} !important;
+    }}
 
     /* Number input */
     [data-testid="stNumberInput"] input {{
