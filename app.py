@@ -2,8 +2,30 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-NAVY = "#1B2A41"
-GOLD = "#C9A84C"
+PALETTES = {
+    "light": {
+        "bg":              "#FBF8F2",
+        "text":            "#1B2A41",
+        "muted":           "#4A5568",
+        "card_bg":         "#F0EBE0",
+        "accent":          "#C9A84C",
+        "bar_default":     "#5B7FA6",
+        "callout_bg":      "#E8F2EC",
+        "callout_border":  "#2D6A4F",
+        "callout_text":    "#1B4332",
+    },
+    "dark": {
+        "bg":              "#0F1923",
+        "text":            "#EDE8DF",
+        "muted":           "#A0AEC0",
+        "card_bg":         "#1A2535",
+        "accent":          "#D4A843",
+        "bar_default":     "#5B8DB8",
+        "callout_bg":      "#1A2F24",
+        "callout_border":  "#4CAF7D",
+        "callout_text":    "#A8D5B5",
+    },
+}
 
 PROGRAMS = {
     "💳 Credit Cards": {
@@ -92,41 +114,40 @@ PROGRAMS = {
     },
 }
 
-BENCHMARKS = {
-    "Chase Ultimate Rewards":       {"range": "1.5 – 2.0¢", "note": "Strong via transfer partners"},
-    "Amex Membership Rewards":      {"range": "1.4 – 2.0¢", "note": "Best via airline transfers"},
-    "Capital One Miles":            {"range": "1.4 – 1.7¢", "note": "Solid via transfer partners"},
-    "Citi ThankYou Points":         {"range": "1.2 – 1.6¢", "note": "Best via premium airlines"},
-    "Bilt Rewards":                 {"range": "1.5 – 2.0¢", "note": "Great program for renters"},
-    "Delta SkyMiles":               {"range": "1.0 – 1.5¢", "note": "Variable — shop for awards"},
-    "United MileagePlus":           {"range": "1.2 – 1.5¢", "note": "Strong for international"},
-    "American Airlines AAdvantage": {"range": "1.2 – 1.7¢", "note": "Good for domestic awards"},
-    "Southwest Rapid Rewards":      {"range": "1.3 – 1.5¢", "note": "Consistent domestic value"},
-    "Alaska Mileage Plan":          {"range": "1.4 – 1.8¢", "note": "Top tier for partner awards"},
-    "World of Hyatt":               {"range": "1.5 – 2.0¢", "note": "Best hotel program by CPP"},
-    "Marriott Bonvoy":              {"range": "0.6 – 0.9¢", "note": "Large network, lower CPP"},
-    "Hilton Honors":                {"range": "0.4 – 0.6¢", "note": "Best for free night certs"},
-}
-
 CPP_DATA = {k: v for group in PROGRAMS.values() for k, v in group.items()}
 
 st.set_page_config(page_title="Points & Miles Comparator", layout="centered")
 
-st.markdown("""
+# Theme toggle
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
+
+p = PALETTES["dark"] if st.session_state.dark_mode else PALETTES["light"]
+
+st.markdown(f"""
 <style>
-    .block-container { padding-top: 2rem; }
-    .stMetric { background-color: #F0EBE0; border-radius: 8px; padding: 0.5rem; }
-    .stCaption p { color: #4A5568 !important; }
+    .stApp {{ background-color: {p['bg']}; }}
+    [data-testid="stHeader"] {{ background-color: {p['bg']}; height: 0; overflow: hidden; }}
+    .block-container {{ padding-top: 1.5rem; }}
+    p, li, label {{ color: {p['text']}; }}
+    h1, h2, h3 {{ color: {p['text']}; }}
+    .stCaption p {{ color: {p['muted']} !important; }}
 </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.title("✈️ Points & Miles Comparator")
+# Title row with toggle
+title_col, toggle_col = st.columns([7, 1])
+with title_col:
+    st.title("✈️ Points & Miles Comparator")
+with toggle_col:
+    st.markdown("<div style='padding-top: 2.3rem;'>", unsafe_allow_html=True)
+    st.toggle("🌙", key="dark_mode")
+    st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(f"""
-<p style="font-size: 1.3rem; font-weight: 600; color: {NAVY}; margin-bottom: 0.25rem;">
+<p style="font-size: 1.3rem; font-weight: 600; color: {p['text']}; margin-bottom: 0.25rem;">
     See what your points are actually worth.
 </p>
-<p style="font-size: 0.97rem; color: #4A5568; line-height: 1.7; margin-top: 0;">
+<p style="font-size: 0.97rem; color: {p['muted']}; line-height: 1.7; margin-top: 0;">
     Hi, I'm Khuslen. This site converts your loyalty points balance into cents per point
     (CPP — how much each point is actually worth) across redemption options — flights, hotels,
     cash back — so you can compare programs that otherwise can't be compared directly.
@@ -137,31 +158,39 @@ st.markdown(f"""
 st.divider()
 
 with st.expander("📖 How does this work?"):
-    st.markdown("""
-<div style="font-family: sans-serif; font-size: 15px; line-height: 1.7;">
+    st.markdown(f"""
+<div style="font-size: 15px; line-height: 1.7; color: {p['text']};">
 
 <p><strong>What is CPP (cents per point)?</strong></p>
 
-<p>Loyalty programs all use different point currencies, so 50,000 Delta miles and 50,000 Chase points aren't worth the same — even though they're the same number. CPP converts everything into a common unit: cents per point.</p>
+<p>Loyalty programs all use different point currencies, so 50,000 Delta miles and 50,000 Chase points
+aren't worth the same — even though they're the same number. CPP converts everything into a common
+unit: cents per point.</p>
 
 <p>The formula is simple: <strong>(dollar value of what you're getting ÷ points used) × 100 = CPP</strong></p>
 
-<p>For example: if 50,000 points gets you a flight worth $750, that's <strong>1.5 CPP</strong>. If those same points gets you $500 cash back, that's only <strong>1.0 CPP</strong>. Higher CPP = more value per point.</p>
+<p>For example: if 50,000 points gets you a flight worth $750, that's <strong>1.5 CPP</strong>.
+If those same points gets you $500 cash back, that's only <strong>1.0 CPP</strong>.
+Higher CPP = more value per point.</p>
 
 <p><strong>Where do the estimates come from?</strong></p>
 
-<p>The CPP values used here are widely published estimates based on typical redemption rates across the travel community. They reflect realistic (not best-case) redemption scenarios. Your actual value may be higher or lower depending on the specific redemption you find.</p>
+<p>The CPP values used here are widely published estimates based on typical redemption rates across
+the travel community. They reflect realistic (not best-case) redemption scenarios. Your actual value
+may be higher or lower depending on the specific redemption you find.</p>
 
 <p><strong>What does a CPP range mean?</strong></p>
 
-<p>Some programs show a range (e.g. "1.25 – 1.50 CPP") for portal bookings. This reflects different card tiers — for example, Chase Sapphire Preferred earns 1.25 CPP on the Chase Travel portal while Chase Sapphire Reserve earns 1.50 CPP.</p>
+<p>Some programs show a range (e.g. "1.25 – 1.50 CPP") for portal bookings. This reflects different
+card tiers — for example, Chase Sapphire Preferred earns 1.25 CPP on the Chase Travel portal while
+Chase Sapphire Reserve earns 1.50 CPP.</p>
 
 </div>
 """, unsafe_allow_html=True)
 
 with st.expander("🛠️ How was this built?"):
-    st.markdown("""
-<div style="font-family: sans-serif; font-size: 15px; line-height: 1.7;">
+    st.markdown(f"""
+<div style="font-size: 15px; line-height: 1.7; color: {p['text']};">
 
 <p>This app was built in Python using three open-source libraries:</p>
 
@@ -171,7 +200,9 @@ with st.expander("🛠️ How was this built?"):
   <li><strong>Plotly</strong> — draws the interactive bar chart</li>
 </ul>
 
-<p>The CPP values are hardcoded estimates based on widely published redemption rates across the travel community. The app was designed and built with the assistance of Claude, an AI assistant made by Anthropic. It is deployed for free on Streamlit Community Cloud and version-controlled on GitHub.</p>
+<p>The CPP values are hardcoded estimates based on widely published redemption rates across the travel
+community. The app was designed and built with the assistance of Claude, an AI assistant made by
+Anthropic. It is deployed for free on Streamlit Community Cloud and version-controlled on GitHub.</p>
 
 </div>
 """, unsafe_allow_html=True)
@@ -221,17 +252,17 @@ if points > 0:
     best = rows_sorted[0]
     worst = rows_sorted[-1]
 
-    # Best redemption callout (sage/mint, not green)
+    # Callout box — pulls from palette
     st.markdown(f"""
-<div style="background-color: #E8F2EC; border-left: 4px solid #2D6A4F;
-            padding: 0.75rem 1rem; border-radius: 6px; color: #1B4332;
+<div style="background-color: {p['callout_bg']}; border-left: 4px solid {p['callout_border']};
+            padding: 0.75rem 1rem; border-radius: 6px; color: {p['callout_text']};
             font-size: 0.95rem; margin-bottom: 1rem;">
     💡 <strong>Best redemption: {best['Redemption Type']}</strong> —
-    {best['Estimated Value ($)'].replace(' *','')} at {best['CPP'].replace(' *','')} per point
+    {best['Estimated Value ($)'].replace(' *', '')} at {best['CPP'].replace(' *', '')} per point
 </div>
 """, unsafe_allow_html=True)
 
-    # Metrics: best | worst | difference
+    # Metrics
     worst_val_str = worst["Estimated Value ($)"].replace(" *", "").replace("$", "").replace(",", "").split("–")[0].strip()
     best_val_str = best["Estimated Value ($)"].replace(" *", "").replace("$", "").replace(",", "").split("–")[-1].strip()
     try:
@@ -247,20 +278,18 @@ if points > 0:
 
     st.markdown("####")
 
-    # Chart — gold for best bar, navy for the rest
+    # Chart — accent for best bar, bar_default for the rest
     chart_rows = []
     for r in rows_sorted:
         val_str = r["Estimated Value ($)"].replace(" *", "")
         if "–" in val_str:
             parts = [float(x.replace("$", "").replace(",", "").strip()) for x in val_str.split("–")]
-            mid = sum(parts) / len(parts)
-            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": mid, "Label": val_str})
+            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": sum(parts) / len(parts), "Label": val_str})
         else:
-            v = float(val_str.replace("$", "").replace(",", ""))
-            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": v, "Label": val_str})
+            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": float(val_str.replace("$", "").replace(",", "")), "Label": val_str})
 
     chart_df = pd.DataFrame(chart_rows)
-    bar_colors = [GOLD] + [NAVY] * (len(chart_df) - 1)
+    bar_colors = [p["accent"]] + [p["bar_default"]] * (len(chart_df) - 1)
 
     fig = go.Figure(go.Bar(
         x=chart_df["Redemption Type"],
@@ -268,13 +297,15 @@ if points > 0:
         marker_color=bar_colors,
         text=chart_df["Label"],
         textposition="outside",
-        textfont=dict(color=NAVY),
+        textfont=dict(color=p["text"]),
     ))
     fig.update_layout(
         yaxis_title="Estimated Value (USD)",
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="sans-serif", size=13, color=NAVY),
+        font=dict(family="sans-serif", size=13, color=p["text"]),
+        yaxis=dict(color=p["text"]),
+        xaxis=dict(color=p["text"]),
         margin=dict(t=20, b=20),
     )
     st.plotly_chart(fig, use_container_width=True)
@@ -283,7 +314,7 @@ if points > 0:
     st.dataframe(df[["Redemption Type", "CPP", "Estimated Value ($)"]], use_container_width=True, hide_index=True)
 
     if range_notes:
-        st.caption(f"* Range shown for {', '.join(range_notes)} reflects different card tiers — value depends on which card you hold.")
+        st.caption(f"* Range for {', '.join(range_notes)} reflects card tiers — value depends on which card you hold.")
 
 else:
     st.info("Enter your point balance above to see redemption values.")
