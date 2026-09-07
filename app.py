@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
+
+NAVY = "#1B2A41"
+GOLD = "#C9A84C"
 
 PROGRAMS = {
     "💳 Credit Cards": {
@@ -89,30 +92,46 @@ PROGRAMS = {
     },
 }
 
-# Flat lookup for display
+BENCHMARKS = {
+    "Chase Ultimate Rewards":       {"range": "1.5 – 2.0¢", "note": "Strong via transfer partners"},
+    "Amex Membership Rewards":      {"range": "1.4 – 2.0¢", "note": "Best via airline transfers"},
+    "Capital One Miles":            {"range": "1.4 – 1.7¢", "note": "Solid via transfer partners"},
+    "Citi ThankYou Points":         {"range": "1.2 – 1.6¢", "note": "Best via premium airlines"},
+    "Bilt Rewards":                 {"range": "1.5 – 2.0¢", "note": "Great program for renters"},
+    "Delta SkyMiles":               {"range": "1.0 – 1.5¢", "note": "Variable — shop for awards"},
+    "United MileagePlus":           {"range": "1.2 – 1.5¢", "note": "Strong for international"},
+    "American Airlines AAdvantage": {"range": "1.2 – 1.7¢", "note": "Good for domestic awards"},
+    "Southwest Rapid Rewards":      {"range": "1.3 – 1.5¢", "note": "Consistent domestic value"},
+    "Alaska Mileage Plan":          {"range": "1.4 – 1.8¢", "note": "Top tier for partner awards"},
+    "World of Hyatt":               {"range": "1.5 – 2.0¢", "note": "Best hotel program by CPP"},
+    "Marriott Bonvoy":              {"range": "0.6 – 0.9¢", "note": "Large network, lower CPP"},
+    "Hilton Honors":                {"range": "0.4 – 0.6¢", "note": "Best for free night certs"},
+}
+
 CPP_DATA = {k: v for group in PROGRAMS.values() for k, v in group.items()}
 
 st.set_page_config(page_title="Points & Miles Comparator", layout="centered")
 
 st.markdown("""
-    <style>
-        .main { background-color: #f8f9fb; }
-        h1 { color: #1a1a2e; }
-        h2, h3 { color: #16213e; }
-    </style>
+<style>
+    .block-container { padding-top: 2rem; }
+    .stMetric { background-color: #F0EBE0; border-radius: 8px; padding: 0.5rem; }
+    .stCaption p { color: #4A5568 !important; }
+</style>
 """, unsafe_allow_html=True)
 
+# Header
 st.title("✈️ Points & Miles Comparator")
-st.markdown("Find out how much your loyalty points are actually worth — and where you'll get the most value.")
-
-st.markdown("""
-<div style="font-family: sans-serif; font-size: 15px; line-height: 1.7; padding: 1rem 0;">
-Airline and credit card loyalty programs make it hard to know what your points are actually worth.
-A flight that costs 50,000 miles might be a great deal — or a terrible one — depending on the program
-and how you redeem. This tool cuts through the confusion by converting every option into a single
-comparable number: <strong>cents per point (CPP)</strong>. Pick your program, enter your balance,
-and instantly see which redemption gives you the most value.
-</div>
+st.markdown(f"""
+<p style="font-size: 1.3rem; font-weight: 600; color: {NAVY}; margin-bottom: 0.25rem;">
+    See what your points are actually worth.
+</p>
+<p style="font-size: 0.97rem; color: #4A5568; line-height: 1.7; margin-top: 0;">
+    Hi, I'm Khuslen. This site converts your loyalty points balance into cents per point
+    (CPP — how much each point is actually worth) across redemption options — flights, hotels,
+    cash back — so you can compare programs that otherwise can't be compared directly.
+    Enter your balance below to find out.
+</p>
 """, unsafe_allow_html=True)
 
 st.divider()
@@ -135,7 +154,7 @@ with st.expander("📖 How does this work?"):
 
 <p><strong>What does a CPP range mean?</strong></p>
 
-<p>Some programs show a range (e.g. "1.25 – 1.50 CPP") for portal bookings. This reflects different card tiers — for example, Chase Sapphire Preferred earns 1.25 CPP on the Chase Travel portal while Chase Sapphire Reserve earns 1.50 CPP. The range shows what's possible depending on which card you hold.</p>
+<p>Some programs show a range (e.g. "1.25 – 1.50 CPP") for portal bookings. This reflects different card tiers — for example, Chase Sapphire Preferred earns 1.25 CPP on the Chase Travel portal while Chase Sapphire Reserve earns 1.50 CPP.</p>
 
 </div>
 """, unsafe_allow_html=True)
@@ -159,7 +178,6 @@ with st.expander("🛠️ How was this built?"):
 
 st.subheader("Select your program")
 
-# Group selector then program selector
 col1, col2 = st.columns(2)
 with col1:
     category = st.selectbox("Category", list(PROGRAMS.keys()))
@@ -177,17 +195,15 @@ if points > 0:
     range_notes = []
     for redemption_type, cpp in redemptions.items():
         if isinstance(cpp, str):
-            # Range value — use the midpoint for sorting/calculations, display as range
             low, high = [float(x.strip()) for x in cpp.split("–")]
             cpp_mid = (low + high) / 2
             dollar_low = round(points * low / 100, 2)
             dollar_high = round(points * high / 100, 2)
-            dollar_display = f"${dollar_low:,.0f} – ${dollar_high:,.0f}"
             range_notes.append(redemption_type)
             rows.append({
                 "Redemption Type": redemption_type,
                 "CPP": cpp + "¢ *",
-                "Estimated Value ($)": dollar_display + " *",
+                "Estimated Value ($)": f"${dollar_low:,.0f} – ${dollar_high:,.0f} *",
                 "_sort": cpp_mid,
             })
         else:
@@ -195,61 +211,70 @@ if points > 0:
             rows.append({
                 "Redemption Type": redemption_type,
                 "CPP": f"{cpp:.2f}¢",
-                "Estimated Value ($)": f"${dollar_value:,.2f}",
+                "Estimated Value ($)": f"${dollar_value:,.0f}",
                 "_sort": cpp,
             })
 
-    df = pd.DataFrame(rows).sort_values("_sort", ascending=False).drop(columns="_sort")
+    rows_sorted = sorted(rows, key=lambda r: r["_sort"], reverse=True)
+    df = pd.DataFrame(rows_sorted).drop(columns="_sort")
 
-    # Best and worst (numeric only for metrics)
-    numeric_rows = [r for r in rows if "–" not in str(r["Estimated Value ($)"])]
-    numeric_df = pd.DataFrame(numeric_rows).sort_values("_sort", ascending=False).drop(columns="_sort") if numeric_rows else None
+    best = rows_sorted[0]
+    worst = rows_sorted[-1]
 
-    best_label = df.iloc[0]["Redemption Type"]
-    worst_label = df.iloc[-1]["Redemption Type"]
+    # Best redemption callout (sage/mint, not green)
+    st.markdown(f"""
+<div style="background-color: #E8F2EC; border-left: 4px solid #2D6A4F;
+            padding: 0.75rem 1rem; border-radius: 6px; color: #1B4332;
+            font-size: 0.95rem; margin-bottom: 1rem;">
+    💡 <strong>Best redemption: {best['Redemption Type']}</strong> —
+    {best['Estimated Value ($)'].replace(' *','')} at {best['CPP'].replace(' *','')} per point
+</div>
+""", unsafe_allow_html=True)
 
-    st.success(f"💡 Best redemption: **{best_label}** — {df.iloc[0]['Estimated Value ($)']} at {df.iloc[0]['CPP']} per point")
+    # Metrics: best | worst | difference
+    worst_val_str = worst["Estimated Value ($)"].replace(" *", "").replace("$", "").replace(",", "").split("–")[0].strip()
+    best_val_str = best["Estimated Value ($)"].replace(" *", "").replace("$", "").replace(",", "").split("–")[-1].strip()
+    try:
+        diff = float(best_val_str) - float(worst_val_str)
+        diff_str = f"${diff:,.0f}"
+    except ValueError:
+        diff_str = "—"
 
-    if numeric_df is not None and len(numeric_df) >= 2:
-        best_n = numeric_df.iloc[0]
-        worst_n = numeric_df.iloc[-1]
-        best_val = float(best_n["Estimated Value ($)"].replace("$", "").replace(",", ""))
-        worst_val = float(worst_n["Estimated Value ($)"].replace("$", "").replace(",", ""))
-        m1, m2, m3 = st.columns(3)
-        m1.metric(f"Best: {best_n['Redemption Type']}", f"${best_val:,.0f}", best_n["CPP"] + " per point")
-        m2.metric(f"Worst: {worst_n['Redemption Type']}", f"${worst_val:,.0f}", worst_n["CPP"] + " per point")
-        m3.metric("Difference", f"${best_val - worst_val:,.0f}", "best vs worst")
+    m1, m2, m3 = st.columns(3)
+    m1.metric(f"Best: {best['Redemption Type']}", best["Estimated Value ($)"].replace(" *", ""), best["CPP"].replace(" *", "") + " per point")
+    m2.metric(f"Worst: {worst['Redemption Type']}", worst["Estimated Value ($)"].replace(" *", ""), worst["CPP"].replace(" *", "") + " per point")
+    m3.metric("Difference", diff_str, "best vs worst")
 
     st.markdown("####")
 
-    # Bar chart — only numeric rows
+    # Chart — gold for best bar, navy for the rest
     chart_rows = []
-    for r in rows:
-        val = r["Estimated Value ($)"].replace(" *", "")
-        if "–" in str(val):
-            low, high = [float(x.replace("$", "").replace(",", "").strip()) for x in val.split("–")]
-            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": (low + high) / 2, "Label": val})
+    for r in rows_sorted:
+        val_str = r["Estimated Value ($)"].replace(" *", "")
+        if "–" in val_str:
+            parts = [float(x.replace("$", "").replace(",", "").strip()) for x in val_str.split("–")]
+            mid = sum(parts) / len(parts)
+            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": mid, "Label": val_str})
         else:
-            v = float(val.replace("$", "").replace(",", ""))
-            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": v, "Label": val})
+            v = float(val_str.replace("$", "").replace(",", ""))
+            chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": v, "Label": val_str})
 
-    chart_df = pd.DataFrame(chart_rows).sort_values("Value", ascending=False)
+    chart_df = pd.DataFrame(chart_rows)
+    bar_colors = [GOLD] + [NAVY] * (len(chart_df) - 1)
 
-    fig = px.bar(
-        chart_df,
-        x="Redemption Type",
-        y="Value",
-        color="Value",
-        color_continuous_scale="Blues",
-        text="Label",
-    )
-    fig.update_traces(textposition="outside")
+    fig = go.Figure(go.Bar(
+        x=chart_df["Redemption Type"],
+        y=chart_df["Value"],
+        marker_color=bar_colors,
+        text=chart_df["Label"],
+        textposition="outside",
+        textfont=dict(color=NAVY),
+    ))
     fig.update_layout(
-        coloraxis_showscale=False,
         yaxis_title="Estimated Value (USD)",
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="sans-serif", size=13),
+        font=dict(family="sans-serif", size=13, color=NAVY),
         margin=dict(t=20, b=20),
     )
     st.plotly_chart(fig, use_container_width=True)
