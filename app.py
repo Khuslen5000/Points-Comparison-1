@@ -126,33 +126,26 @@ p = PALETTES["dark"] if st.session_state.dark_mode else PALETTES["light"]
 
 st.markdown(f"""
 <style>
-    .stApp {{ background-color: {p['bg']}; }}
+    .stApp {{ background-color: {p['bg']} !important; }}
     [data-testid="stHeader"] {{ background-color: {p['bg']}; height: 0; overflow: hidden; }}
     .block-container {{ padding-top: 1.5rem; }}
 
-    /* Text elements */
-    p, li, label, span, div {{ color: {p['text']}; }}
+    /* Text */
+    p, li, label, span {{ color: {p['text']} !important; }}
     h1, h2, h3, h4 {{ color: {p['text']} !important; }}
 
-    /* Metric numbers and labels */
+    /* Metrics */
     [data-testid="stMetricValue"] > div {{ color: {p['text']} !important; }}
     [data-testid="stMetricLabel"] > div {{ color: {p['text']} !important; }}
     [data-testid="stMetricDelta"] {{ color: {p['muted']} !important; }}
 
-    /* Dropdowns */
-    [data-baseweb="select"] > div,
-    [data-baseweb="select"] > div > div,
-    [data-baseweb="select"] span,
-    [data-baseweb="popover"] li,
-    [data-baseweb="menu"] {{
-        background-color: {p['card_bg']} !important;
-        color: {p['text']} !important;
-    }}
-    [data-baseweb="option"]:hover {{
-        background-color: {p['bg']} !important;
-    }}
-
-    /* Number input */
+    /* Dropdowns and inputs */
+    [data-baseweb="select"] > div {{ background-color: {p['card_bg']} !important; }}
+    [data-baseweb="select"] * {{ color: {p['text']} !important; }}
+    [data-baseweb="popover"] {{ background-color: {p['card_bg']} !important; }}
+    [data-baseweb="menu"] {{ background-color: {p['card_bg']} !important; }}
+    [data-baseweb="option"] {{ background-color: {p['card_bg']} !important; color: {p['text']} !important; }}
+    [data-baseweb="option"]:hover {{ background-color: {p['bg']} !important; }}
     [data-testid="stNumberInput"] input {{
         background-color: {p['card_bg']} !important;
         color: {p['text']} !important;
