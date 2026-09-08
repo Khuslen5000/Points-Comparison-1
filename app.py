@@ -9,9 +9,9 @@ p = {
     "card_bg":        "#155680",
     "accent":         "#C9A84C",
     "bar_default":    "#5BA4CF",
-    "callout_bg":     "#1A3D2B",
-    "callout_border": "#4CAF7D",
-    "callout_text":   "#A8D5B5",
+    "callout_bg":     "rgba(168, 230, 207, 0.18)",
+    "callout_border": "#52B788",
+    "callout_text":   "#F0EBE0",
 }
 
 PROGRAMS = {
@@ -322,3 +322,61 @@ if points > 0:
 
 else:
     st.info("Enter your point balance above to see redemption values.")
+
+st.divider()
+
+# --- Best Program Finder ---
+st.subheader("🏆 Best Program Finder")
+st.markdown(f"""
+<p style="font-size: 0.97rem; color: {p['muted']}; margin-top: -0.5rem;">
+    Enter balances for every program you hold. We'll rank them by best redemption value
+    so you know exactly which one to use for your next trip.
+</p>
+""", unsafe_allow_html=True)
+
+all_programs = list(CPP_DATA.keys())
+balances = {}
+
+cols = st.columns(2)
+for i, prog in enumerate(all_programs):
+    with cols[i % 2]:
+        val = st.number_input(prog, min_value=0, step=1000, value=0, key=f"bal_{prog}")
+        if val > 0:
+            balances[prog] = val
+
+if balances:
+    results = []
+    for prog, pts in balances.items():
+        for redemption_type, cpp in CPP_DATA[prog].items():
+            if isinstance(cpp, str):
+                low, high = [float(x.strip()) for x in cpp.split("–")]
+                cpp_val = (low + high) / 2
+            else:
+                cpp_val = cpp
+            dollar_value = round(pts * cpp_val / 100)
+            results.append({
+                "Program": prog,
+                "Redemption Type": redemption_type,
+                "Points": f"{pts:,}",
+                "Est. Value ($)": f"${dollar_value:,}",
+                "_sort": dollar_value,
+            })
+
+    results_sorted = sorted(results, key=lambda r: r["_sort"], reverse=True)
+    top = results_sorted[0]
+
+    st.markdown(f"""
+<div style="background-color: {p['callout_bg']}; border-left: 4px solid {p['callout_border']};
+            padding: 0.75rem 1rem; border-radius: 6px; color: {p['callout_text']};
+            font-size: 0.95rem; margin: 1rem 0;">
+    💡 <strong>Best overall: {top['Program']}</strong> — {top['Redemption Type']} —
+    {top['Est. Value ($)']} from {top['Points']} points
+</div>
+""", unsafe_allow_html=True)
+
+    results_df = pd.DataFrame(results_sorted).drop(columns="_sort")
+    st.markdown("**Full ranking**")
+    st.dataframe(results_df, use_container_width=True, hide_index=True)
+
+else:
+    st.info("Enter balances for at least one program above to see your ranking.")
