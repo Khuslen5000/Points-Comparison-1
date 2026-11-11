@@ -3,15 +3,17 @@ import pandas as pd
 import plotly.graph_objects as go
 
 p = {
-    "bg":             "#1A6B9A",
-    "text":           "#F0EBE0",
-    "muted":          "#B8D4E8",
-    "card_bg":        "#155680",
-    "accent":         "#C9A84C",
-    "bar_default":    "#5BA4CF",
-    "callout_bg":     "rgba(168, 230, 207, 0.18)",
-    "callout_border": "#52B788",
-    "callout_text":   "#F0EBE0",
+    "bg":             "#F4F7FB",   # soft off-white (like airline sites)
+    "text":           "#1B2A41",   # deep navy text
+    "muted":          "#5B6B7F",   # gray-blue for secondary text
+    "card_bg":        "#FFFFFF",   # white inputs/cards
+    "border":         "#D6DEE8",   # light border around inputs
+    "brand":          "#1D5FA8",   # main blue
+    "accent":         "#E0A526",   # gold for the best bar
+    "bar_default":    "#A9C4E4",   # light blue for other bars
+    "callout_bg":     "#E8F5EE",
+    "callout_border": "#2E9E6A",
+    "callout_text":   "#1B2A41",
 }
 
 PROGRAMS = {
@@ -103,21 +105,11 @@ PROGRAMS = {
 
 CPP_DATA = {k: v for group in PROGRAMS.values() for k, v in group.items()}
 
-st.set_page_config(page_title="Points & Miles Comparator", layout="centered")
+st.set_page_config(page_title="PointsWorth — Redeem Right", layout="centered")
 
 st.markdown(f"""
 <style>
-    .stApp {{
-        background:
-            radial-gradient(ellipse 220px 90px at 15% 12%, rgba(255,255,255,0.30) 0%, transparent 70%),
-            radial-gradient(ellipse 160px 70px at 22% 18%, rgba(255,255,255,0.20) 0%, transparent 70%),
-            radial-gradient(ellipse 280px 100px at 65% 8%,  rgba(255,255,255,0.28) 0%, transparent 70%),
-            radial-gradient(ellipse 180px 75px at 72% 15%, rgba(255,255,255,0.18) 0%, transparent 70%),
-            radial-gradient(ellipse 200px 85px at 88% 22%, rgba(255,255,255,0.22) 0%, transparent 70%),
-            radial-gradient(ellipse 140px 60px at 40% 6%,  rgba(255,255,255,0.15) 0%, transparent 70%),
-            linear-gradient(180deg, #5BB8E8 0%, #2E8FCC 30%, #1A6B9A 70%, #155680 100%);
-        background-attachment: fixed;
-    }}
+    .stApp {{ background-color: {p['bg']}; }}
     [data-testid="stHeader"] {{ background-color: {p['bg']}; height: 0; overflow: hidden; }}
     .block-container {{ padding-top: 1.5rem; }}
 
@@ -131,12 +123,12 @@ st.markdown(f"""
     [data-testid="stMetricDelta"] {{ color: {p['muted']} !important; }}
 
     /* Dropdowns and inputs */
-    [data-baseweb="select"] > div {{ background-color: {p['card_bg']} !important; }}
+    [data-baseweb="select"] > div {{ background-color: {p['card_bg']} !important; border-color: {p['border']} !important; }}
     [data-baseweb="select"] * {{ color: {p['text']} !important; }}
     [data-baseweb="popover"] {{ background-color: {p['card_bg']} !important; }}
     [data-baseweb="menu"] {{ background-color: {p['card_bg']} !important; }}
     [data-baseweb="option"] {{ background-color: {p['card_bg']} !important; color: {p['text']} !important; }}
-    [data-baseweb="option"]:hover {{ background-color: {p['bg']} !important; }}
+    [data-baseweb="option"]:hover {{ background-color: #E6EEF8 !important; }}
     [data-testid="stNumberInput"] input {{
         background-color: {p['card_bg']} !important;
         color: {p['text']} !important;
@@ -146,10 +138,10 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("✈️ Points & Miles Comparator")
+st.title("✈️ PointsWorth")
 st.markdown(f"""
-<p style="font-size: 1.3rem; font-weight: 600; color: {p['text']}; margin-bottom: 0.25rem;">
-    See what your points are actually worth.
+<p style="font-size: 1.3rem; font-weight: 600; color: {p['brand']}; margin-bottom: 0.25rem;">
+    Redeem right — see what your points are actually worth.
 </p>
 <p style="font-size: 0.97rem; color: {p['muted']}; line-height: 1.7; margin-top: 0;">
     Hi, I'm Khuslen. This site converts your loyalty points balance into cents per point
