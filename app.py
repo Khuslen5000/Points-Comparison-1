@@ -1,5 +1,10 @@
 import streamlit as st
 import pandas as pd
+import json
+import textwrap
+from datetime import date
+from pathlib import Path
+
 import plotly.graph_objects as go
 
 p = {
@@ -18,94 +23,37 @@ p = {
     "callout_text":   "#1B2A41",
 }
 
-PROGRAMS = {
-    "Credit Cards": {
-        "Chase Ultimate Rewards": {
-            "Flights (transfer partners)": 2.0,
-            "Hotels (transfer partners)": 1.5,
-            "Chase Travel portal": "1.25 – 1.50",
-            "Cash back": 1.0,
-        },
-        "Amex Membership Rewards": {
-            "Flights (transfer partners)": 2.0,
-            "Hotels (transfer partners)": 1.4,
-            "Amex Travel portal": 1.0,
-            "Cash back": 0.6,
-        },
-        "Capital One Miles": {
-            "Flights (transfer partners)": 1.7,
-            "Hotels (transfer partners)": 1.4,
-            "Capital One Travel portal": 1.0,
-            "Cash back": 1.0,
-        },
-        "Citi ThankYou Points": {
-            "Flights (transfer partners)": 1.6,
-            "Hotels (transfer partners)": 1.3,
-            "Citi Travel portal": 1.0,
-            "Cash back": 0.5,
-        },
-        "Bilt Rewards": {
-            "Flights (transfer partners)": 2.0,
-            "Hotels (transfer partners)": 1.5,
-            "Rent payments": 1.0,
-            "Cash back": 0.55,
-        },
-    },
-    "Airlines": {
-        "Delta SkyMiles": {
-            "Delta flights": 1.2,
-            "Partner flights": 1.0,
-            "Upgrades": 1.5,
-            "Cash back": 0.5,
-        },
-        "United MileagePlus": {
-            "United flights": 1.35,
-            "Partner flights": 1.2,
-            "Upgrades": 1.5,
-            "Cash back": 0.5,
-        },
-        "American Airlines AAdvantage": {
-            "AA flights": 1.67,
-            "Partner flights": 1.2,
-            "Upgrades": 1.4,
-            "Cash back": 0.5,
-        },
-        "Southwest Rapid Rewards": {
-            "Southwest flights": 1.5,
-            "Hotel partners": 0.8,
-            "Car rentals": 0.8,
-            "Cash back": 0.6,
-        },
-        "Alaska Mileage Plan": {
-            "Alaska flights": 1.8,
-            "Partner flights": 1.6,
-            "Upgrades": 1.5,
-            "Cash back": 0.5,
-        },
-    },
-    "Hotels": {
-        "World of Hyatt": {
-            "Hyatt hotels": 1.7,
-            "Premium properties": 2.0,
-            "Airline transfers": 1.0,
-            "Cash back": 0.4,
-        },
-        "Marriott Bonvoy": {
-            "Marriott hotels": 0.7,
-            "Premium properties": 1.0,
-            "Airline transfers": 0.7,
-            "Cash back": 0.3,
-        },
-        "Hilton Honors": {
-            "Hilton hotels": 0.5,
-            "Premium properties": 0.8,
-            "Airline transfers": 0.5,
-            "Cash back": 0.2,
-        },
-    },
-}
+# --- Data: CPP values live in data/valuations.csv, source info in data/meta.json ---
+# To update each month: edit the "TPG" rows in valuations.csv and the dates in meta.json.
+DATA_DIR = Path(__file__).parent / "data"
 
-CPP_DATA = {k: v for group in PROGRAMS.values() for k, v in group.items()}
+VAL = pd.read_csv(DATA_DIR / "valuations.csv")
+VAL["cpp_mid"] = (VAL["cpp_low"] + VAL["cpp_high"]) / 2   # midpoint used for ranking ranges
+META = json.loads((DATA_DIR / "meta.json").read_text())
+
+# Category -> list of programs, in the order they appear in the file
+PROGRAMS = {cat: list(dict.fromkeys(g["program"])) for cat, g in VAL.groupby("category", sort=False)}
+ALL_PROGRAMS = list(dict.fromkeys(VAL["program"]))
+
+
+def fmt_cpp(low, high):
+    return f"{low:.2f}¢" if low == high else f"{low:.2f} – {high:.2f}¢"
+
+
+def fmt_dollars(low, high):
+    return f"${low:,.0f}" if round(low) == round(high) else f"${low:,.0f} – ${high:,.0f}"
+
+
+def value_table(program, points):
+    """Every redemption for one program, with dollar values, best first."""
+    t = VAL[VAL["program"] == program].copy()
+    t["value_low"] = points * t["cpp_low"] / 100
+    t["value_high"] = points * t["cpp_high"] / 100
+    t["value_mid"] = points * t["cpp_mid"] / 100
+    t["is_range"] = t["cpp_low"] != t["cpp_high"]
+    t["CPP"] = [fmt_cpp(lo, hi) for lo, hi in zip(t["cpp_low"], t["cpp_high"])]
+    t["Value"] = [fmt_dollars(lo, hi) for lo, hi in zip(t["value_low"], t["value_high"])]
+    return t.sort_values("cpp_mid", ascending=False).reset_index(drop=True)
 
 st.set_page_config(page_title="PointsWorth — Redeem Right", layout="wide", initial_sidebar_state="auto")
 
@@ -224,6 +172,26 @@ st.markdown(f"""
     .pw-section {{ font-family: {FONT_DISPLAY}; font-size: 1.75rem; line-height: 1.2; color: {p['text']}; margin-bottom: 0.4rem; }}
     .pw-blurb {{ font-size: 0.95rem !important; color: {p['muted']} !important; margin: 0 0 0.75rem; }}
 
+    /* Stat cards (best / worst / difference) */
+    .pw-stat {{
+        background: {p['card_bg']}; border: 1px solid {p['border']}; border-radius: 12px;
+        padding: 0.9rem 1.1rem; height: 100%;
+    }}
+    .pw-stat-label {{ font-size: 0.85rem; color: {p['muted']}; line-height: 1.35; min-height: 2.3em; }}
+    .pw-stat-value {{ font-size: 1.9rem; font-weight: 700; color: {p['text']}; line-height: 1.2; margin: 0.2rem 0; }}
+    .pw-stat-sub {{ font-size: 0.85rem; color: {p['muted']}; }}
+    .pw-stat-best {{ border-top: 4px solid {p['accent']}; }}
+
+    /* Hide the "Press Enter to submit form" hint that overlaps typed numbers */
+    [data-testid="InputInstructions"] {{ display: none; }}
+
+    /* Data freshness line */
+    .pw-fresh {{ display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+                 font-size: 0.85rem; color: {p['muted']}; margin: 0 0 1rem 0.2rem; }}
+    .pw-fresh a {{ color: {p['brand']}; }}
+    .pw-dot {{ width: 8px; height: 8px; border-radius: 50%; display: inline-block; }}
+    .pw-stale {{ color: #9A6700; font-weight: 600; }}
+
     /* Callout */
     .pw-callout {{
         display: flex; gap: 0.85rem; align-items: flex-start;
@@ -273,6 +241,16 @@ def section(eyebrow, title, blurb=None):
     html(f'<div class="pw-eyebrow">{eyebrow}</div><div class="pw-section">{title}</div>{blurb_html}')
 
 
+def stat_card(label, value, sub, highlight=False):
+    """White card with a label, a big number, and a small grey line underneath (no misleading arrows)."""
+    extra = " pw-stat-best" if highlight else ""
+    html(f"""<div class="pw-stat{extra}">
+<div class="pw-stat-label">{label}</div>
+<div class="pw-stat-value">{value}</div>
+<div class="pw-stat-sub">{sub}</div>
+</div>""")
+
+
 def callout(label, body):
     """Green highlight box with a check icon."""
     html(f"""<div class="pw-callout">{CHECK_SVG}<div>
@@ -294,6 +272,16 @@ html(f"""
     </p>
 </div>
 """)
+
+# --- Data freshness: green dot when current, amber when it's time to update ---
+_updated = date.fromisoformat(META["last_updated"])
+_age_days = (date.today() - _updated).days
+_stale = _age_days > META["stale_after_days"]
+_dot = "#D4A017" if _stale else "#2E9E6A"
+_status = f'<span class="pw-stale">Due for an update ({_age_days} days old)</span>' if _stale else "Up to date"
+html(f"""<div class="pw-fresh"><span class="pw-dot" style="background:{_dot}"></span>
+Values: <a href="{META['source_url']}" target="_blank">{META['source_name']}</a>, {META['valuation_month']}
+· Updated {_updated:%b} {_updated.day}, {_updated.year} · {_status}</div>""")
 
 # --- Sidebar: background info, pull-out on demand ---
 with st.sidebar:
@@ -317,8 +305,9 @@ Higher CPP = more value per point.</p>
 
 <p><strong>Where do the estimates come from?</strong></p>
 
-<p>The CPP values used here are widely published estimates based on typical redemption rates across
-the travel community. They reflect realistic (not best-case) redemption scenarios. Your actual value
+<p>Each program's main redemption (transfer partners for card points, award flights for airlines,
+award nights for hotels) uses The Points Guy's monthly valuation, updated by hand each month. The other
+options (portals, cash back, upgrades and so on) are estimates of typical rates. Your actual value
 may be higher or lower depending on the specific redemption you find.</p>
 
 <p><strong>What does a CPP range mean?</strong></p>
@@ -342,8 +331,8 @@ Chase Sapphire Reserve earns 1.50 CPP.</p>
   <li><strong>Plotly</strong> — draws the interactive bar chart</li>
 </ul>
 
-<p>The CPP values are hardcoded estimates based on widely published redemption rates across the travel
-community. The app was designed and built with the assistance of Claude, an AI assistant made by
+<p>The CPP values live in a small data file (<code>data/valuations.csv</code>) that is refreshed monthly
+from The Points Guy's published valuations; the date at the top of the page shows when it was last updated. The app was designed and built with the assistance of Claude, an AI assistant made by
 Anthropic. It is deployed for free on Streamlit Community Cloud and version-controlled on GitHub.</p>
 
 </div>
@@ -359,7 +348,7 @@ with tab_value:
         with st.container(key="input_panel"):
             section("Step 1", "Choose your program")
             category = st.selectbox("Category", list(PROGRAMS.keys()))
-            program = st.selectbox("Program", list(PROGRAMS[category].keys()))
+            program = st.selectbox("Program", PROGRAMS[category])
             # A form waits for the button (or Enter) before recalculating
             with st.form("value_form", border=False):
                 points = st.number_input("How many points do you have?", min_value=0, step=1000, value=50000)
@@ -367,76 +356,36 @@ with tab_value:
 
     with right:
         if points > 0:
-            redemptions = CPP_DATA[program]
-
-            rows = []
-            range_notes = []
-            for redemption_type, cpp in redemptions.items():
-                if isinstance(cpp, str):
-                    low, high = [float(x.strip()) for x in cpp.split("–")]
-                    cpp_mid = (low + high) / 2
-                    dollar_low = round(points * low / 100, 2)
-                    dollar_high = round(points * high / 100, 2)
-                    range_notes.append(redemption_type)
-                    rows.append({
-                        "Redemption Type": redemption_type,
-                        "CPP": cpp + "¢ *",
-                        "Estimated Value ($)": f"${dollar_low:,.0f} – ${dollar_high:,.0f} *",
-                        "_sort": cpp_mid,
-                    })
-                else:
-                    dollar_value = round(points * cpp / 100, 2)
-                    rows.append({
-                        "Redemption Type": redemption_type,
-                        "CPP": f"{cpp:.2f}¢",
-                        "Estimated Value ($)": f"${dollar_value:,.0f}",
-                        "_sort": cpp,
-                    })
-
-            rows_sorted = sorted(rows, key=lambda r: r["_sort"], reverse=True)
-            df = pd.DataFrame(rows_sorted).drop(columns="_sort")
-
-            best = rows_sorted[0]
-            worst = rows_sorted[-1]
+            t = value_table(program, points)
+            best, worst = t.iloc[0], t.iloc[-1]
 
             section("Step 2", "What your points are worth", f"{points:,} {program} points, ranked by value.")
             callout(
                 "Best redemption",
-                f"<strong>{best['Redemption Type']}</strong> — "
-                f"{best['Estimated Value ($)'].replace(' *', '')} at {best['CPP'].replace(' *', '')} per point",
+                f"<strong>{best['redemption']}</strong> — {best['Value']} at {best['CPP']} per point",
             )
 
-            worst_val_str = worst["Estimated Value ($)"].replace(" *", "").replace("$", "").replace(",", "").split("–")[0].strip()
-            best_val_str = best["Estimated Value ($)"].replace(" *", "").replace("$", "").replace(",", "").split("–")[-1].strip()
-            try:
-                diff = float(best_val_str) - float(worst_val_str)
-                diff_str = f"${diff:,.0f}"
-            except ValueError:
-                diff_str = "—"
+            # Best case of the best option minus worst case of the worst option
+            diff = best["value_high"] - worst["value_low"]
 
             m1, m2, m3 = st.columns(3)
-            m1.metric(f"Best: {best['Redemption Type']}", best["Estimated Value ($)"].replace(" *", ""), best["CPP"].replace(" *", "") + " per point")
-            m2.metric(f"Worst: {worst['Redemption Type']}", worst["Estimated Value ($)"].replace(" *", ""), worst["CPP"].replace(" *", "") + " per point")
-            m3.metric("Difference", diff_str, "best vs worst")
+            with m1:
+                stat_card(f"Best · {best['redemption']}", best["Value"], best["CPP"] + " per point", highlight=True)
+            with m2:
+                stat_card(f"Worst · {worst['redemption']}", worst["Value"], worst["CPP"] + " per point")
+            with m3:
+                stat_card("Difference", f"${diff:,.0f}", "what you gain by choosing the best option")
 
-            # Chart — accent for best bar, bar_default for the rest
-            chart_rows = []
-            for r in rows_sorted:
-                val_str = r["Estimated Value ($)"].replace(" *", "")
-                if "–" in val_str:
-                    parts = [float(x.replace("$", "").replace(",", "").strip()) for x in val_str.split("–")]
-                    chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": sum(parts) / len(parts), "Label": val_str})
-                else:
-                    chart_rows.append({"Redemption Type": r["Redemption Type"], "Value": float(val_str.replace("$", "").replace(",", "")), "Label": val_str})
-
-            chart_df = pd.DataFrame(chart_rows)
-            bar_colors = [p["accent"]] + [p["bar_default"]] * (len(chart_df) - 1)
+            # Chart — gold for the best bar, light blue for the rest; ranges plotted at their midpoint
+            bar_colors = [p["accent"]] + [p["bar_default"]] * (len(t) - 1)
 
             fig = go.Figure(go.Bar(
-                x=chart_df["Redemption Type"],
-                y=chart_df["Value"],
+                # Wrap long names onto 2 lines (e.g. "Flights<br>(transfer partners)") so nothing gets cut off
+                x=[name.replace(" (", "<br>(") if "(" in name else "<br>".join(textwrap.wrap(name, 16))
+                   for name in t["redemption"]],
+                y=t["value_mid"],
                 marker_color=bar_colors,
-                text=chart_df["Label"],
+                text=t["Value"],
                 textposition="outside",
                 textfont=dict(color=p["text"]),
                 cliponaxis=False,
@@ -448,17 +397,19 @@ with tab_value:
                 paper_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter, sans-serif", size=13, color=p["text"]),
                 yaxis=dict(color=p["text"], gridcolor=p["border"], fixedrange=True),  # fixedrange = no zoom/drag
-                xaxis=dict(color=p["text"], fixedrange=True),
+                xaxis=dict(color=p["text"], fixedrange=True, tickangle=0),
                 dragmode=False,
                 margin=dict(t=30, b=10, l=10, r=10),
             )
             st.plotly_chart(fig, config={"displayModeBar": False, "scrollZoom": False, "doubleClick": False})
 
             with st.expander("Full breakdown"):
-                st.dataframe(df[["Redemption Type", "CPP", "Estimated Value ($)"]], width="stretch", hide_index=True)
+                table = t.rename(columns={"redemption": "Redemption Type", "Value": "Estimated Value ($)"})
+                st.dataframe(table[["Redemption Type", "CPP", "Estimated Value ($)"]], width="stretch", hide_index=True)
 
+            range_notes = t.loc[t["is_range"], "redemption"].tolist()
             if range_notes:
-                st.caption(f"* Range for {', '.join(range_notes)} reflects card tiers — value depends on which card you hold.")
+                st.caption(f"Range for {', '.join(range_notes)} reflects card tiers — value depends on which card you hold.")
 
         else:
             st.info("Enter your point balance to see redemption values.")
@@ -473,7 +424,7 @@ with tab_finder:
             section("Your balances", "What do you hold?", "Pick your programs, then enter each balance.")
             held = st.multiselect(
                 "Programs you hold",
-                options=list(CPP_DATA.keys()),
+                options=ALL_PROGRAMS,
                 placeholder="Choose one or more programs",
             )
             if held:
@@ -487,35 +438,40 @@ with tab_finder:
 
     with right:
         section("Compare", "Best Program Finder",
-                "We rank every redemption across your programs so you know which to use for your next trip.")
+                "We compare every redemption across your programs by what each point is worth, "
+                "so you know which points to use for your next trip.")
         if balances:
-            results = []
-            for prog, pts in balances.items():
-                for redemption_type, cpp in CPP_DATA[prog].items():
-                    if isinstance(cpp, str):
-                        low, high = [float(x.strip()) for x in cpp.split("–")]
-                        cpp_val = (low + high) / 2
-                    else:
-                        cpp_val = cpp
-                    dollar_value = round(pts * cpp_val / 100)
-                    results.append({
-                        "Program": prog,
-                        "Redemption Type": redemption_type,
-                        "Points": f"{pts:,}",
-                        "Est. Value ($)": f"${dollar_value:,}",
-                        "_sort": dollar_value,
-                    })
-
-            results_sorted = sorted(results, key=lambda r: r["_sort"], reverse=True)
-            top = results_sorted[0]
-
-            callout(
-                "Best overall",
-                f"<strong>{top['Program']}</strong> — {top['Redemption Type']} — "
-                f"{top['Est. Value ($)']} from {top['Points']} points",
+            # Stack every held program's redemption table into one
+            results = pd.concat(
+                [value_table(prog, pts).assign(Program=prog, Points=pts) for prog, pts in balances.items()],
+                ignore_index=True,
             )
+            best_pp = results.sort_values(["cpp_mid", "value_mid"], ascending=False).iloc[0]
+            biggest = results.sort_values("value_mid", ascending=False).iloc[0]
 
-            results_df = pd.DataFrame(results_sorted).drop(columns="_sort")
+            # Headline = best value per point (a bigger balance shouldn't win just by being bigger)
+            body = (f"<strong>{best_pp['Program']}</strong> — {best_pp['redemption']} at "
+                    f"<strong>{best_pp['CPP']}</strong> per point ({best_pp['Value']} from {best_pp['Points']:,} points)")
+            if (biggest["Program"], biggest["redemption"]) != (best_pp["Program"], best_pp["redemption"]):
+                body += (f"<br><span style='font-size:0.9rem'>Biggest total payout: {biggest['Program']} — "
+                         f"{biggest['redemption']}, {biggest['Value']} (because that balance is larger)</span>")
+            callout("Best value per point", body)
+
+            rank_by = st.radio(
+                "Rank by", ["Value per point", "Total dollar value"], horizontal=True,
+                help="Value per point shows which points are most valuable to spend. "
+                     "Total dollar value shows which balance is worth the most overall.",
+            )
+            sort_cols = ["cpp_mid", "value_mid"] if rank_by == "Value per point" else ["value_mid", "cpp_mid"]
+            results = results.sort_values(sort_cols, ascending=False)
+
+            results_df = pd.DataFrame({
+                "Program": results["Program"],
+                "Redemption Type": results["redemption"],
+                "CPP": results["CPP"],
+                "Points": [f"{x:,}" for x in results["Points"]],
+                "Est. Value ($)": results["Value"],
+            })
             st.dataframe(results_df, width="stretch", hide_index=True)
         else:
             st.info("Choose your programs on the left, enter balances, then click **Find my best program**.")

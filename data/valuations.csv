@@ -1,0 +1,53 @@
+category,program,redemption,cpp_low,cpp_high,source,note
+Credit Cards,Chase Ultimate Rewards,Flights (transfer partners),2.05,2.05,TPG,TPG monthly valuation
+Credit Cards,Chase Ultimate Rewards,Hotels (transfer partners),1.5,1.5,Estimate,
+Credit Cards,Chase Ultimate Rewards,Chase Travel portal,1.25,1.5,Estimate,
+Credit Cards,Chase Ultimate Rewards,Cash back,1.0,1.0,Estimate,
+Credit Cards,Amex Membership Rewards,Flights (transfer partners),2.0,2.0,TPG,TPG monthly valuation
+Credit Cards,Amex Membership Rewards,Hotels (transfer partners),0.8,0.8,Estimate,Amex hotel partners are weak: Hilton 1:2 (~0.8¢) or Marriott 1:1 (~0.75¢)
+Credit Cards,Amex Membership Rewards,Amex Travel portal,1.0,1.0,Estimate,
+Credit Cards,Amex Membership Rewards,Cash back,0.6,0.6,Estimate,
+Credit Cards,Capital One Miles,Flights (transfer partners),1.85,1.85,TPG,TPG monthly valuation
+Credit Cards,Capital One Miles,Hotels (transfer partners),1.0,1.0,Estimate,"Partners are Accor 2:1, Wyndham and Choice 1:1; roughly 1¢ blended"
+Credit Cards,Capital One Miles,Capital One Travel portal,1.0,1.0,Estimate,
+Credit Cards,Capital One Miles,Cash back,0.5,0.5,Estimate,Capital One miles cash out at 0.5¢ (1¢ only as a travel statement credit)
+Credit Cards,Citi ThankYou Points,Flights (transfer partners),1.95,1.95,TPG,TPG monthly valuation
+Credit Cards,Citi ThankYou Points,Hotels (transfer partners),1.0,1.0,Estimate,"Partners are Accor 2:1, Wyndham and Choice 1:1; roughly 1¢ blended"
+Credit Cards,Citi ThankYou Points,Citi Travel portal,1.0,1.0,Estimate,
+Credit Cards,Citi ThankYou Points,Cash back,0.5,0.5,Estimate,
+Credit Cards,Bilt Rewards,Flights (transfer partners),2.2,2.2,TPG,TPG monthly valuation
+Credit Cards,Bilt Rewards,Hotels (transfer partners),1.5,1.5,Estimate,
+Credit Cards,Bilt Rewards,Rent payments,1.0,1.0,Estimate,
+Credit Cards,Bilt Rewards,Cash back,0.55,0.55,Estimate,
+Airlines,Delta SkyMiles,Delta flights,1.2,1.2,TPG,TPG monthly valuation
+Airlines,Delta SkyMiles,Partner flights,1.0,1.0,Estimate,
+Airlines,Delta SkyMiles,Upgrades,1.0,1.0,Estimate,Mileage upgrades usually return less than award flights
+Airlines,Delta SkyMiles,Cash back,0.5,0.5,Estimate,
+Airlines,United MileagePlus,United flights,1.2,1.2,TPG,TPG monthly valuation
+Airlines,United MileagePlus,Partner flights,1.2,1.2,Estimate,
+Airlines,United MileagePlus,Upgrades,1.0,1.0,Estimate,Mileage upgrades require miles plus a cash co-pay; usually below award value
+Airlines,United MileagePlus,Cash back,0.5,0.5,Estimate,
+Airlines,American Airlines AAdvantage,AA flights,1.45,1.45,TPG,TPG monthly valuation
+Airlines,American Airlines AAdvantage,Partner flights,1.2,1.2,Estimate,
+Airlines,American Airlines AAdvantage,Upgrades,1.2,1.2,Estimate,Mileage upgrades require miles plus a co-pay; usually below award value
+Airlines,American Airlines AAdvantage,Cash back,0.5,0.5,Estimate,
+Airlines,Southwest Rapid Rewards,Southwest flights,1.25,1.25,TPG,TPG monthly valuation
+Airlines,Southwest Rapid Rewards,Hotel partners,0.8,0.8,Estimate,
+Airlines,Southwest Rapid Rewards,Car rentals,0.8,0.8,Estimate,
+Airlines,Southwest Rapid Rewards,Cash back,0.6,0.6,Estimate,
+Airlines,Alaska Atmos Rewards,Alaska flights,1.6,1.6,TPG,TPG monthly valuation
+Airlines,Alaska Atmos Rewards,Partner flights,1.6,1.6,Estimate,
+Airlines,Alaska Atmos Rewards,Upgrades,1.2,1.2,Estimate,Upgrades usually return less than award flights
+Airlines,Alaska Atmos Rewards,Cash back,0.5,0.5,Estimate,
+Hotels,World of Hyatt,Hyatt hotels,1.65,1.65,TPG,TPG monthly valuation
+Hotels,World of Hyatt,Premium properties,2.0,2.0,Estimate,
+Hotels,World of Hyatt,Airline transfers,0.5,0.5,Estimate,"Hyatt transfers to airlines at 5:2, so each point becomes 0.4 miles"
+Hotels,World of Hyatt,Cash back,0.4,0.4,Estimate,
+Hotels,Marriott Bonvoy,Marriott hotels,0.75,0.75,TPG,TPG monthly valuation
+Hotels,Marriott Bonvoy,Premium properties,1.0,1.0,Estimate,
+Hotels,Marriott Bonvoy,Airline transfers,0.5,0.5,Estimate,Marriott transfers at 3:1 with a 5k bonus per 60k; roughly 0.5¢
+Hotels,Marriott Bonvoy,Cash back,0.3,0.3,Estimate,
+Hotels,Hilton Honors,Hilton hotels,0.4,0.4,TPG,TPG monthly valuation
+Hotels,Hilton Honors,Premium properties,0.6,0.6,Estimate,Aspirational stays beat average but rarely double Hilton's 0.4¢ valuation
+Hotels,Hilton Honors,Airline transfers,0.1,0.1,Estimate,"Hilton transfers to airlines at 10:1, so each point is worth about 0.1¢"
+Hotels,Hilton Honors,Cash back,0.2,0.2,Estimate,
