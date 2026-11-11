@@ -1,0 +1,52 @@
+# Visits the live app every 6 hours so Streamlit Community Cloud doesn't put it to sleep.
+# If the app is already asleep, it clicks the "wake up" button.
+#
+# To test it: GitHub repo -> Actions tab -> "Keep app awake" -> "Run workflow".
+# If you ever change the app's URL, update APP_URL below.
+
+name: Keep app awake
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # every 6 hours (times are UTC; GitHub may run it a few minutes late)
+  workflow_dispatch:          # adds a "Run workflow" button for manual runs
+
+env:
+  APP_URL: https://points-comparison-1-lchs7pxez8ghfgvhkbkr7k.streamlit.app/
+
+jobs:
+  visit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install a headless browser
+        run: |
+          pip install playwright==1.48.0
+          python -m playwright install --with-deps chromium
+
+      - name: Visit the app (and wake it if asleep)
+        run: |
+          python - <<'PY'
+          import os
+          from playwright.sync_api import sync_playwright
+
+          url = os.environ["APP_URL"]
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              page = browser.new_page()
+              page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+              page.wait_for_timeout(8_000)  # give the page time to load
+
+              wake = page.get_by_role("button", name="Yes, get this app back up!")
+              if wake.count() > 0:
+                  print("App was asleep - waking it up")
+                  wake.first.click()
+                  page.wait_for_timeout(60_000)  # stay on the page while it boots
+              else:
+                  print("App is awake")
+              browser.close()
+          PY
