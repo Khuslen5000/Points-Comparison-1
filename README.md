@@ -4,7 +4,7 @@
 
 PointsWorth converts a credit card, airline or hotel points balance into dollars using **cents per point (CPP)**, so you can compare programs that use completely different currencies and pick the redemption that gives you the most value.
 
-**[Try the live app →](https://points-comparison-1-lchs7pxez8ghfgvhkbkr7k.streamlit.app/)**
+**[Try the live app →](https://pointsworth.streamlit.app/)**
 
 ![Value my points: redemption options ranked by value](screenshots/value-my-points.png)
 
@@ -60,8 +60,8 @@ Deployed for free on Streamlit Community Cloud. Designed and built with the help
 ## Run it locally
 
 ```bash
-git clone https://github.com/Khuslen5000/Points-Comparison-1.git
-cd Points-Comparison-1
+git clone https://github.com/Khuslen5000/PointsWorth.git
+cd PointsWorth
 pip install -r requirements.txt
 streamlit run app.py
 ```

@@ -12,7 +12,7 @@ on:
   workflow_dispatch:          # adds a "Run workflow" button for manual runs
 
 env:
-  APP_URL: https://points-comparison-1-lchs7pxez8ghfgvhkbkr7k.streamlit.app/
+  APP_URL: https://pointsworth.streamlit.app/
 
 jobs:
   visit:
